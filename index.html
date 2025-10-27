@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login con Captcha</title>
+    <link href='https://cdn.boxicons.com/fonts/basic/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="./style.css">
+</head>
+
+<body>
+    <main>
+        <div class="container_main">
+            <section>
+                <div class="container">
+                    <div class="content">
+                        <form id="loginForm">
+                            <h1>Welcome Back</h1>
+                            <p>Enter your email and password to access your account.</p>
+
+                            <div class="container_input">
+                                <label>Email</label>
+                                <input type="email" id="email" placeholder="example@gmail.com" required>
+                            </div>
+
+                            <div class="container_input">
+                                <label>Password</label>
+                                <input type="password" id="password" placeholder="********" required>
+                                <button class="info" type="button"><i class='bxr bx-help-circle'></i></button>
+                                <div class="card">
+                                    <ul class="list">
+                                        <div>Debe tener:</div>
+                                        <li>Entre 8 y 13 caracteres</li>
+                                        <li>Por lo menos 1 mayúscula</li>
+                                        <li>Por lo menos 1 minúscula</li>
+                                        <li>Por lo menos 1 número</li>
+                                    </ul>
+                                </div>
+                                <small id="passwordError" style="color:red; display:none;">La contraseña no cumple con
+                                    los requisitos.</small>
+                            </div>
+
+                            <div class="captcha_container">
+                                <canvas id="captcha" width="120" height="40"></canvas>
+                                <button type="button" id="reloadCaptcha">↻</button>
+                            </div>
+
+                            <div class="container_input">
+                                <label for="captchaInput">Enter the text</label>
+                                <input type="text" id="captchaInput" placeholder="Type the text above" required>
+                            </div>
+
+                            <button type="submit">Login</button>
+                        </form>
+
+                        <div class="container_img">
+                            <img src="https://raw.githubusercontent.com/khadkamhn/day-01-login-form/master/img/bg.jpg"
+                                alt="">
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script>
+        // ================= CAPTCHA ==================
+        const captcha = document.getElementById('captcha');
+        const ctx = captcha.getContext('2d');
+        const reloadBtn = document.getElementById('reloadCaptcha');
+        const captchaInput = document.getElementById('captchaInput');
+        const form = document.getElementById('loginForm');
+        let captchaText = '';
+
+        function generateCaptcha() {
+            captchaText = Math.random().toString(36).substring(2, 7).toUpperCase();
+            ctx.clearRect(0, 0, captcha.width, captcha.height);
+            ctx.fillStyle = '#f3f3f3';
+            ctx.fillRect(0, 0, captcha.width, captcha.height);
+
+            for (let i = 0; i < 5; i++) {
+                ctx.strokeStyle = `rgba(0,0,0,${Math.random()})`;
+                ctx.beginPath();
+                ctx.moveTo(Math.random() * 120, Math.random() * 40);
+                ctx.lineTo(Math.random() * 120, Math.random() * 40);
+                ctx.stroke();
+            }
+
+            ctx.font = '24px monospace';
+            ctx.fillStyle = '#000';
+            ctx.setTransform(1, Math.random() * 0.3, Math.random() * 0.3, 1, 10, 25);
+            ctx.fillText(captchaText, 10, 0);
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+        }
+
+        reloadBtn.addEventListener('click', generateCaptcha);
+        generateCaptcha();
+
+        // ================= PASSWORD VALIDATION ==================
+        const password = document.getElementById('password');
+        const passwordError = document.getElementById('passwordError');
+
+        function validatePassword(pass) {
+            const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,13}$/;
+            return regex.test(pass);
+        }
+
+        password.addEventListener('input', () => {
+            passwordError.style.display = validatePassword(password.value) ? 'none' : 'block';
+        });
+
+        // ================= FORM SUBMIT ==================
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            if (!validatePassword(password.value)) {
+                alert('La contraseña no cumple los requisitos.');
+                password.focus();
+                return;
+            }
+
+            const userInput = captchaInput.value.trim().toUpperCase();
+            if (userInput !== captchaText) {
+                alert('Captcha incorrecto. Intenta de nuevo.');
+                generateCaptcha();
+                captchaInput.value = '';
+                return;
+            }
+
+            // Crear token JSON simulado
+            const userEmail = document.getElementById("email").value;
+            const token = {
+                user: userEmail,
+                createdAt: Date.now(),
+                expiresIn: 5000 // 5 segundos de inactividad
+            };
+
+            localStorage.setItem("sessionToken", JSON.stringify(token));
+            alert('Inicio de sesión exitoso');
+            window.location.href = "dashboard.html";
+        });
+
+        // ================= INFO CARD ==================
+        document.addEventListener('DOMContentLoaded', () => {
+            const profileButton = document.querySelector('.info');
+            const card = document.querySelector('.card');
+
+            profileButton.addEventListener('click', (event) => {
+                event.stopPropagation();
+                card.style.display = card.style.display === 'none' || card.style.display === '' ? 'flex' : 'none';
+            });
+
+            document.addEventListener('click', (event) => {
+                if (!card.contains(event.target) && event.target !== profileButton) {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
